@@ -29,7 +29,7 @@ Include the library in your leiningen project dependencies:
 
 (defform login-form
          [[[:username required (pattern #"[a-zA-Z]+" :msg-fn (constantly "Only [a-zA-Z] characters are allowed!"))]
-           [:password (required :message "Passwords is required!")]]])
+           [:password (required :message "Password is required!")]]])
 
 (print (login-form {"username" "da-le" "email" "email" "bad-data" "bad-value"}))
 

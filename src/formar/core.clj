@@ -98,7 +98,6 @@
   [fields source]
   (reduce (partial fetch-attribute source) empty-form fields))
 
-
 ;; ----------------------
 
 (defmacro expand-field
@@ -108,16 +107,13 @@
      (for [form forms]
        (if (seq? form)
          (with-meta `(~(first form) ~x ~@(rest form)) (meta form))
-         (list form x)
-         )))
-   ))
+         (list form x))))))
 
 (defmacro form-fields
   [fields]
   (vec
     (for [[field & forms] fields]
-      `[~field (expand-field ~field ~forms)]
-      )))
+      `[~field (expand-field ~field ~forms)])))
 
 (defmacro defform
   [name body]

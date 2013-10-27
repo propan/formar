@@ -81,22 +81,33 @@
 
 ;; Forms
 
-(defn- fetch-attribute
-  [source dest [attribute transformers]]
-  (let [value (get source (name attribute))]
-    (loop [res (assoc-in dest [:data attribute] value)
-           ts transformers]
+(defn- transform-field
+  [source dest [field transformers]]
+  (let [value (get source (name field))]
+    (loop [res (assoc-in dest [:data field] value)
+           ts  transformers]
       (if-not (empty? ts)
         (let [t (first ts)
               res (t res)]
-          (if (valid? res attribute)
+          (if (valid? res field)
             (recur res (rest ts))
             res))
         res))))
 
-(defn- fetch-form
-  [fields source]
-  (reduce (partial fetch-attribute source) empty-form fields))
+(defn fetch-form
+  "Populates form data from the source map based on the rules defined in fields.
+
+   Returns a map with the following keys:
+     :data        - all data produced by transformers
+     :data-errors - all data errors detected by field transformers
+     :form-errors - all errors detected by form transformers
+
+   Notes:
+     1. The field transformation stops if any of the field transformers detects an error.
+     2. If any of field transformers detects a problem, non of the form transformers is triggered.
+     3. If a form transformer detects an issue, the transformation ends."
+  [source fields]
+  (reduce (partial transform-field source) empty-form fields))
 
 ;; ----------------------
 
@@ -119,4 +130,4 @@
   [name body]
   `(defn ~name
      [m#]
-     (#'fetch-form (form-fields ~(first body)) m#)))
+     (fetch-form m# (form-fields ~(first body)))))

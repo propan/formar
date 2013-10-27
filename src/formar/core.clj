@@ -127,6 +127,15 @@
       `[~field (expand-field ~field ~forms)])))
 
 (defmacro defform
+  "A simple macro that defines a function that takes a map (presumably a http-form) to be
+   transformed and validated with a set of rules defined in the body. It returns a map -
+   the result of this transfromation.
+
+   Example usage:
+     (defform registration-form
+       [[[:username required (pattern #\"^[a-zA-Z0-9_]+$\")]
+         [:email required email]
+         [:password required]]])"
   [name body]
   `(defn ~name
      [m#]

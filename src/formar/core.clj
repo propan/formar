@@ -114,17 +114,15 @@
 (defmacro expand-field
   ([x] [])
   ([x forms]
-   (vec
-     (for [form forms]
-       (if (seq? form)
-         (with-meta `(~(first form) ~x ~@(rest form)) (meta form))
-         (list form x))))))
+   (mapv (fn [form]
+           (if (seq? form)
+             (with-meta `(~(first form) ~x ~@(next form)) (meta form))
+             (list form x))) forms)))
 
-(defmacro form-fields
-  [fields]
-  (vec
-    (for [[field & forms] fields]
-      `[~field (expand-field ~field ~forms)])))
+(defmacro expand-fields
+  [fields-spec]
+  (mapv (fn [[field & forms]]
+          `[~field (expand-field ~field ~forms)]) fields-spec))
 
 (defmacro defform
   "A simple macro that defines a function that takes a map (presumably a http-form) to be
@@ -139,4 +137,4 @@
   [name body]
   `(defn ~name
      [m#]
-     (fetch-form m# (form-fields ~(first body)))))
+     (fetch-form m# (expand-fields ~(first body)))))

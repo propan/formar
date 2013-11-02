@@ -87,7 +87,7 @@
       (is (= "is not a valid email" (get-in (tran-fn {:data {:email "email"}}) [:data-errors :email])))
       (is (= "is not a valid email" (get-in (tran-fn {}) [:data-errors :email]))))))
 
-(defn password-match
+(defn passwords-match
   [m]
   (let [{:keys [password repeat-password]} (:data m)]
     (if-not (= password repeat-password)
@@ -104,7 +104,7 @@
     [:email required email]
     [:password required]
     [:repeat-password required]]
-   [password-match]])
+   [passwords-match]])
 
 (deftest form-test
   (testing "Field validation"

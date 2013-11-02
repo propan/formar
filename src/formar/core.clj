@@ -97,10 +97,18 @@
 (defn transform
   "Transforms form data from the source map based on the rules defined in fields.
 
+   Accepts the following arguments:
+     source  - an orginal map with string keys
+     fields  - a list of field definitions:
+               - the first item in the list is a keyword - the name of the field
+               - the seconds items is a list of transformers to be applied to the field
+     form-fn - a function (usually a composite function) to be appled to the result of field
+               transformations if the result is valid
+
    Returns a map with the following keys:
      :data        - all data produced by transformers
      :data-errors - all data errors detected by field transformers
-     :form-errors - all errors detected by form transformers
+     :form-errors - a vector of errors detected by form transformers
 
    Notes:
      1. The field transformation stops if any of the field transformers detects an error.

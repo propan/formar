@@ -87,17 +87,44 @@
       (is (= "is not a valid email" (get-in (tran-fn {:data {:email "email"}}) [:data-errors :email])))
       (is (= "is not a valid email" (get-in (tran-fn {}) [:data-errors :email]))))))
 
+(defn password-match
+  [m]
+  (let [{:keys [password repeat-password]} (:data m)]
+    (if-not (= password repeat-password)
+      (update-in m [:form-errors] conj "Passwords don't match!")
+      m)))
+
+(defform simple-registration-form
+  [[[:username required (pattern #"^[a-zA-Z0-9_]+$")]
+    [:email required email]
+    [:password required]]])
+
 (defform registration-form
-         [[[:username required (pattern #"^[a-zA-Z0-9_]+$")]
-           [:email required email]
-           [:password required]]])
+  [[[:username required (pattern #"^[a-zA-Z0-9_]+$")]
+    [:email required email]
+    [:password required]
+    [:repeat-password required]]
+   [password-match]])
 
 (deftest form-test
-  (let [result (registration-form {"username" "bob" "email" "email" "password" "" "extra-field" "bad-data"})]
-    (is (= "bob" (get-in result [:data :username])))
-    (is (= "email" (get-in result [:data :email])))
-    (is (= "" (get-in result [:data :password])))
-    (is (nil? (get-in result [:data :extra-field])))
-    (is (nil? (get-in result [:data-errors :username])))
-    (is (= "is not a valid email" (get-in result [:data-errors :email])))
-    (is (= "is required" (get-in result [:data-errors :password])))))
+  (testing "Field validation"
+    (let [result (simple-registration-form {"username" "bob"
+                                     "email" "email"
+                                     "password" ""
+                                     "extra-field" "bad-data"})]
+      (is (= "bob" (get-in result [:data :username])))
+      (is (= "email" (get-in result [:data :email])))
+      (is (= "" (get-in result [:data :password])))
+      (is (nil? (get-in result [:data :extra-field])))
+      (is (nil? (get-in result [:data-errors :username])))
+      (is (= "is not a valid email" (get-in result [:data-errors :email])))
+      (is (= "is required" (get-in result [:data-errors :password])))))
+
+  (testing "Form validation"
+    (let [result (registration-form {"username" "bob"
+                                     "email" "bob@thebobs.com"
+                                     "password" "pass"
+                                     "repeat-password" "word"})]
+      (is (empty? (:data-errors result)))
+      (is (= 1 (count (:form-errors result))))
+      (is (true? (some #(= "Passwords don't match!" %) (:form-errors result)))))))

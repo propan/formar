@@ -94,8 +94,8 @@
             res))
         res))))
 
-(defn fetch-form
-  "Populates form data from the source map based on the rules defined in fields.
+(defn transform
+  "Transforms form data from the source map based on the rules defined in fields.
 
    Returns a map with the following keys:
      :data        - all data produced by transformers
@@ -106,8 +106,9 @@
      1. The field transformation stops if any of the field transformers detects an error.
      2. If any of field transformers detects a problem, non of the form transformers is triggered.
      3. If a form transformer detects an issue, the transformation ends."
-  [source fields]
-  (reduce (partial transform-field source) empty-form fields))
+  [source fields form-fn]
+  (let [r (reduce (partial transform-field source) empty-form fields)]
+    (if (valid? r) (form-fn r) r)))
 
 ;; ----------------------
 
@@ -124,6 +125,15 @@
   (mapv (fn [[field & forms]]
           `[~field (expand-field ~field ~forms)]) fields-spec))
 
+(defmacro expand-form-fn
+  [spec]
+  (let [g (gensym)
+        step (fn [trans-fn] `(if (valid? ~g) (-> ~g ~trans-fn) ~g))]
+    `(fn [m#]
+      (let [~g m#
+            ~@(interleave (repeat g) (map step spec))]
+         ~g))))
+
 (defmacro defform
   "A simple macro that defines a function that takes a map (presumably a http-form) to be
    transformed and validated with a set of rules defined in the body. It returns a map -
@@ -133,8 +143,10 @@
      (defform registration-form
        [[[:username required (pattern #\"^[a-zA-Z0-9_]+$\")]
          [:email required email]
-         [:password required]]])"
+         [:password required]
+         [:repeat-password required]]
+       [password-match]])"
   [name body]
   `(defn ~name
      [m#]
-     (fetch-form m# (expand-fields ~(first body)))))
+     (transform m# (expand-fields ~(first body)) (expand-form-fn ~(second body)))))

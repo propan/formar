@@ -63,6 +63,8 @@
           m)))))
 
 (defn pattern
+  "Creates a transformer that check if the value assigned to the given attribute key
+   matches the given regexp. It does not allow nils by default."
   [attribute regexp & {:keys [message msg-fn allow-nil] :or {message "has incorrect format" allow-nil true}}]
   (let [msg-fn (or msg-fn (constantly message))]
     (fn [m]
@@ -76,6 +78,8 @@
             m))))))
 
 (defn email
+  "Creates a transformer that checks if the value assigned to the given attribute key
+   is a valid email address. By default it does not allow nils. It does not modify the original map."
   [attribute & {:keys [message msg-fn allow-nil] :or {message "is not a valid email" allow-nil false}}]
   (pattern attribute email-regexp :message message :msg-fn msg-fn :allow-nil allow-nil))
 

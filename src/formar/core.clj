@@ -33,6 +33,16 @@
   ([form attribute]
    (nil? (get-in form [:data-errors attribute]))))
 
+(defn- coerce-number
+  "Coerces a value to an number otherwise returns nil."
+  [val]
+  (if-not (integer? val)
+    (try
+      (Long/parseLong val)
+      (catch NumberFormatException e
+        nil))
+    val))
+
 ;; Transformers
 
 (defn number
@@ -43,10 +53,41 @@
     (fn [m]
       (let [value (get-value m attribute ::not-found)]
         (if-not (= value ::not-found)
-          (try
-            (assoc-in m [:data attribute] (Long/parseLong value))
-            (catch NumberFormatException e
-              (data-error m attribute (msg-fn attribute :number))))
+          (if-let [value (coerce-number value)]
+            (assoc-in m [:data attribute] value)
+            (data-error m attribute (msg-fn attribute :number)))
+          m)))))
+
+(defn range-of
+  [attribute & {:keys [max min msg-fn number-message min-message max-message range-message]
+                :or {number-message "should be a number"
+                     min-message    "should be greater than %d"
+                     max-message    "should be less than %d"
+                     range-message  "should be between %d and %d"}}]
+  (let [number-fn (or msg-fn (constantly number-message))
+        min-fn    (or msg-fn (constantly (format min-message min)))
+        max-fn    (or msg-fn (constantly (format max-message max)))
+        range-fn  (or msg-fn (constantly (format range-message min max)))]
+    (fn [m]
+      (let [value (get-value m attribute ::not-found)]
+        (if-not (= value ::not-found)
+          (if-let [value (coerce-number value)]
+            (cond
+             (and (not (nil? min))
+                  (not (nil? max))
+                  (not (and (>= value min)
+                            (<= value max)))) (data-error m attribute (range-fn attribute :range min max))
+
+             (and (not (nil? min))
+                  (nil? max)
+                  (not (>= value min)))       (data-error m attribute (min-fn attribute :min min))
+
+             (and (nil? min)
+                  (not (nil? max))
+                  (not (<= value max)))       (data-error m attribute (max-fn attribute :max max))
+
+             :else                            (assoc-in m [:data attribute] value))
+            (data-error m attribute (number-fn attribute :number)))
           m)))))
 
 (defn required

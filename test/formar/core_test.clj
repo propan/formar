@@ -12,47 +12,93 @@
 (deftest test-number
   (testing "Ignores non-existing keys"
     (let [tran-fn (number :age)
-          result (tran-fn {:data {}})]
+          result  (tran-fn {:data {}})]
       (is (nil? (get-in result [:data-errors :age])))
       (is (nil? (get-in result [:data :age])))))
 
   (testing "Transfroms values to numbers"
     (let [tran-fn (number :age)
-          result (tran-fn {:data {:age "30"}})]
+          result  (tran-fn {:data {:age "30"}})]
       (is (nil? (get-in result [:data-errors :age])))
       (is (= 30 (get-in result [:data :age])))))
 
   (testing "Allows custom error message"
     (let [tran-fn (number :age :message "Your value is incorrect")
-          result (tran-fn {:data {:age "bad-value"}})]
+          result  (tran-fn {:data {:age "bad-value"}})]
       (is (= "Your value is incorrect" (get-in result [:data-errors :age])))
       (is (= "bad-value" (get-in result [:data :age])))))
 
   (testing "Allows custom error message function"
     (let [tran-fn (number :age :msg-fn (constantly "Your value is incorrect"))
-          result (tran-fn {:data {:age "bad-value"}})]
+          result  (tran-fn {:data {:age "bad-value"}})]
       (is (= "Your value is incorrect" (get-in result [:data-errors :age])))
       (is (= "bad-value" (get-in result [:data :age]))))))
+
+(deftest test-range-of
+  (testing "Ignores non-existing keys"
+    (let [tran-fn (range-of :age :min 18)
+          result  (tran-fn {:data {}})]
+      (is (nil? (get-in result [:data-errors :age])))
+      (is (nil? (get-in result [:data :age])))))
+
+  (testing "Converts values to numbers"
+    (let [tran-fn (range-of :age)
+          result  (tran-fn {:data {:age "30"}})]
+      (is (nil? (get-in result [:data-errors :age])))
+      (is (= 30 (get-in result [:data :age])))))
+  
+  (let [tran-fn (range-of :age :min 18)]
+    (testing "Only minimum is checked [positive]"
+      (let [result (tran-fn {:data {:age 42}})]
+        (is (nil? (get-in result [:data-errors :age])))
+        (is (= 42 (get-in result [:data :age])))))
+
+    (testing "Only minimum is checked [negative]"
+      (let [result (tran-fn {:data {:age 12}})]
+        (is (= "should be greater than 18" (get-in result [:data-errors :age])))
+        (is (= 12 (get-in result [:data :age]))))))
+
+  (let [tran-fn (range-of :age :max 18)]
+    (testing "Only maximum is checked [positive]"
+      (let [result (tran-fn {:data {:age 12}})]
+        (is (nil? (get-in result [:data-errors :age])))
+        (is (= 12 (get-in result [:data :age])))))
+
+    (testing "Only maximum is checked [negative]"
+      (let [result (tran-fn {:data {:age 42}})]
+        (is (= "should be less than 18" (get-in result [:data-errors :age])))
+        (is (= 42 (get-in result [:data :age]))))))
+
+  (let [tran-fn (range-of :age :min 10 :max 16)]
+    (testing "Range is checked [positive]"
+      (let [result (tran-fn {:data {:age 12}})]
+        (is (nil? (get-in result [:data-errors :age])))
+        (is (= 12 (get-in result [:data :age])))))
+
+    (testing "Range is checked [negative]"
+      (let [result (tran-fn {:data {:age 42}})]
+        (is (= "should be between 10 and 16" (get-in result [:data-errors :age])))
+        (is (= 42 (get-in result [:data :age])))))))
 
 (deftest test-required
   (testing "Catches nil values"
     (let [tran-fn (required :age)
-          result (tran-fn {:data {}})]
+          result  (tran-fn {:data {}})]
       (is (= "is required" (get-in result [:data-errors :age])))))
 
   (testing "Catches empty strings"
     (let [tran-fn (required :age)
-          result (tran-fn {:data {:age ""}})]
+          result  (tran-fn {:data {:age ""}})]
       (is (= "is required" (get-in result [:data-errors :age])))))
 
   (testing "Allows custom error message"
     (let [tran-fn (required :age :message "Your value is incorrect")
-          result (tran-fn {})]
+          result  (tran-fn {})]
       (is (= "Your value is incorrect" (get-in result [:data-errors :age])))))
 
   (testing "Allows custom error message function"
     (let [tran-fn (required :age :msg-fn (constantly "Your value is incorrect"))
-          result (tran-fn {})]
+          result  (tran-fn {})]
       (is (= "Your value is incorrect" (get-in result [:data-errors :age]))))))
 
 (deftest test-pattern
@@ -68,12 +114,12 @@
 
   (testing "Allows custom error message"
     (let [tran-fn (pattern :age #"\d+" :message "Your value is incorrect" :allow-nil false)
-          result (tran-fn {})]
+          result  (tran-fn {})]
       (is (= "Your value is incorrect" (get-in result [:data-errors :age])))))
 
   (testing "Allows custom error message function"
     (let [tran-fn (pattern :age #"\d+" :msg-fn (constantly "Your value is incorrect") :allow-nil false)
-          result (tran-fn {})]
+          result  (tran-fn {})]
       (is (= "Your value is incorrect" (get-in result [:data-errors :age]))))))
 
 (deftest test-email
@@ -108,10 +154,10 @@
 
 (deftest form-test
   (testing "Field validation"
-    (let [result (simple-registration-form {"username" "bob"
-                                     "email" "email"
-                                     "password" ""
-                                     "extra-field" "bad-data"})]
+    (let [result (simple-registration-form {"username"    "bob"
+                                            "email"       "email"
+                                            "password"    ""
+                                            "extra-field" "bad-data"})]
       (is (= "bob" (get-in result [:data :username])))
       (is (= "email" (get-in result [:data :email])))
       (is (= "" (get-in result [:data :password])))
@@ -121,9 +167,9 @@
       (is (= "is required" (get-in result [:data-errors :password])))))
 
   (testing "Form validation"
-    (let [result (registration-form {"username" "bob"
-                                     "email" "bob@thebobs.com"
-                                     "password" "pass"
+    (let [result (registration-form {"username"        "bob"
+                                     "email"           "bob@thebobs.com"
+                                     "password"        "pass"
                                      "repeat-password" "word"})]
       (is (empty? (:data-errors result)))
       (is (= 1 (count (:form-errors result))))

@@ -1,4 +1,4 @@
-(defproject formar "0.1.2-SNAPSHOT"
+(defproject formar "0.1.2"
   :description "a form tranformation/validation library"
   :url "https://github.com/propan/formar"
   :license {:name "Eclipse Public License"

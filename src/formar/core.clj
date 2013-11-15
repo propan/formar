@@ -26,6 +26,7 @@
 ;; Helpers
 
 (defn valid?
+  "Checks if the given form is valid."
   ([form]
    (and
      (empty? (:data-errors form))
@@ -46,8 +47,12 @@
 ;; Transformers
 
 (defn number
-  "Creates a transformer that converts the value assigned to attribute key to a number.
-   It silently ignores non-existing keys."
+  "Creates a transformer that converts the value assigned to the given 'attribute' key to a number.
+   It silently ignores non-existing keys.
+
+   Optional parameters:
+       :message (default: \"should be a number\") - the triggered error message
+       :msg-fn  (default: nil) - a function (fn [attribute type]) to retrieve the error message"
   [attribute & {:keys [message msg-fn] :or {message "should be a number"}}]
   (let [msg-fn (or msg-fn (constantly message))]
     (fn [m]
@@ -58,6 +63,17 @@
         m))))
 
 (defn range-of
+  "Creates a transformer that converts the value assigned to the given 'attribute' key to a number
+   and checks that it belongs to the given range.
+
+   Optional parameters:
+       :max (default: nil) - the maximum allowed value
+       :min (default: nil) - the minimum allowed value
+       :number-message (default: \"should be a number\") - the 'number' error message
+       :min-message (default: \"should be greater than %d\") - the 'min' error message
+       :max-message (default: \"should be less than %d\") - the 'max' error message
+       :range-message (default: \"should be between %d and %d\") - the 'range' error message
+       :msg-fn  (default: nil) - a function (fn [attribute type & args]) to retrieve the error message"
   [attribute & {:keys [max min msg-fn number-message min-message max-message range-message]
                 :or {number-message "should be a number"
                      min-message    "should be greater than %d"
@@ -89,6 +105,17 @@
         m))))
 
 (defn length
+  "Creates a validator for the length of the value assigned to the 'attribute' key.
+
+   Optional parameters:
+       :is (default: nil) - the exact allowed length (if given, :min and :max are ignored)
+       :max (default: nil) - the maximum allowed length
+       :min (default: nil) - the minimum allowed length
+       :is-message (default: \"should be exactly %d character(s)\") - the 'is' error message
+       :min-message (default: \"should be at least %d character(s)\") - the 'min' error message
+       :max-message (default: \"should be at most %d character(s)\") - the 'max' error message
+       :range-message (default: \"should be between %d and %d characters long\") - the 'range' error message
+       :msg-fn  (default: nil) - a function (fn [attribute type & args]) to retrieve the error message"
   [attribute & {:keys [is min max msg-fn is-message min-message max-message range-message]
                 :or {is-message    "should be exactly %d character(s)"
                      min-message   "should be at least %d character(s)"
@@ -122,8 +149,13 @@
         m))))
 
 (defn choice
-  "Create a transformer that checks if the value assigned to the given attribute key
-   is in the set of allowed values. Nil-values are not allowed."
+  "Creates a validator that checks that the value assigned to the given 'attribute' key
+   is in the set of allowed values. Nil-values are not allowed.
+
+   Optional parameters:
+       :required-message (default: \"is required\") - the 'required' error message
+       :not-allowed-message (default: \"is not allowed\") - the 'not-allowed-value' message
+       :msg-fn (default: nil) - a function (fn [attribute type]) to retrieve the error message"
   [attribute options & {:keys [msg-fn required-message not-allowed-message]
                         :or {required-message    "is required"
                              not-allowed-message "is not allowed"}}]
@@ -137,8 +169,12 @@
         (data-error m attribute (required-fn attribute :required))))))
 
 (defn required
-  "Creates a transformer that checks if the value assigned to attribute key
-   is not nil or an empty string. It leaves the original map untouched."
+  "Creates a validator that check whether the value assigned to the 'attribute' key
+   is not nil or an empty string.
+
+   Optional parameters:
+       :message (default: \"is required\") - the error message
+       :msg-fn (default: nil) - a function (fn [attribute type]) to retrieve the error message"
   [attribute & {:keys [message msg-fn] :or {message "is required"}}]
   (let [msg-fn (or msg-fn (constantly message))]
     (fn [m]
@@ -150,8 +186,13 @@
           m)))))
 
 (defn pattern
-  "Creates a transformer that check if the value assigned to the given attribute key
-   matches the given regexp. It does not allow nils by default."
+  "Creates a validator that check if the value assigned to the given 'attribute' key
+   matches the given regexp. It does not allow nils by default.
+
+   Optional parameters:
+       :allow-nil (default: true) - allow nils or not
+       :message (default: \"has incorrect format\") - the error message
+       :msg-fn (default: nil) - a function (fn [attribute type]) to retrieve the error message"
   [attribute regexp & {:keys [message msg-fn allow-nil] :or {message "has incorrect format" allow-nil true}}]
   (let [msg-fn (or msg-fn (constantly message))]
     (fn [m]
@@ -165,8 +206,13 @@
             m))))))
 
 (defn email
-  "Creates a transformer that checks if the value assigned to the given attribute key
-   is a valid email address. By default it does not allow nils. It does not modify the original map."
+  "Creates a validator that checks if the value assigned to the given 'attribute' key
+   is a valid email address. By default it does not allow nils.
+
+   Optional parameters:
+       :allow-nil (default: true) - allow nils or not
+       :message (default: \"is not a valid email\") - the error message
+       :msg-fn (default: nil) - a function (fn [attribute type]) to retrieve the error message"
   [attribute & {:keys [message msg-fn allow-nil] :or {message "is not a valid email" allow-nil false}}]
   (pattern attribute email-regexp :message message :msg-fn msg-fn :allow-nil allow-nil))
 

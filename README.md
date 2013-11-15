@@ -7,7 +7,7 @@ A Clojure library that helps to transform and validate http forms.
 Include the library in your leiningen project dependencies:
 
 ```clojure
-[formar "0.1.1"]
+[formar "0.1.2"]
 ```
 
 ## Examples

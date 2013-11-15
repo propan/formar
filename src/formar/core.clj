@@ -216,6 +216,14 @@
   [attribute & {:keys [message msg-fn allow-nil] :or {message "is not a valid email" allow-nil false}}]
   (pattern attribute email-regexp :message message :msg-fn msg-fn :allow-nil allow-nil))
 
+(defn keywordize
+  "Creates a transformer that changes the value assigned to the given 'attribute' key to a keyword."
+  [attribute]
+  (fn [m]
+    (if-let [value (get-value m attribute)]
+      (assoc-in m [:data attribute] (keyword value))
+      m)))
+
 ;; Forms
 
 (defn- transform-field

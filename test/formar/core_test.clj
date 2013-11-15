@@ -203,6 +203,17 @@
       (is (= "is not a valid email" (get-in (tran-fn {:data {:email "email"}}) [:data-errors :email])))
       (is (= "is not a valid email" (get-in (tran-fn {}) [:data-errors :email]))))))
 
+(deftest test-keywordize
+  (let [tran-fn (keywordize :type)]
+    (testing "Ignores nils"
+      (let [result (tran-fn {})]
+        (is (nil? (get-in result [:data :type])))))
+    
+    (testing "Perfroms transformation"
+      (let [result (tran-fn {:data {:type "raw"}})]
+        (is (= :raw (get-in result [:data :type])))))))
+
+
 (defn passwords-match
   [m]
   (let [{:keys [password repeat-password]} (:data m)]

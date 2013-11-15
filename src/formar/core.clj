@@ -69,26 +69,58 @@
         max-fn    (or msg-fn (constantly (format max-message max)))
         range-fn  (or msg-fn (constantly (format range-message min max)))]
     (fn [m]
-      (let [value (get-value m attribute ::not-found)]
-        (if-not (= value ::not-found)
-          (if-let [value (coerce-number value)]
-            (cond
-             (and (not (nil? min))
-                  (not (nil? max))
-                  (not (and (>= value min)
-                            (<= value max)))) (data-error m attribute (range-fn attribute :range min max))
+      (if-let [value (get-value m attribute)]
+        (if-let [value (coerce-number value)]
+          (cond
+           (and (not (nil? min))
+                (not (nil? max))
+                (not (and (>= value min)
+                          (<= value max)))) (data-error m attribute (range-fn attribute :range min max))
 
-             (and (not (nil? min))
-                  (nil? max)
-                  (not (>= value min)))       (data-error m attribute (min-fn attribute :min min))
+           (and (not (nil? min))
+                (nil? max)
+                (not (>= value min)))       (data-error m attribute (min-fn attribute :min min))
 
-             (and (nil? min)
-                  (not (nil? max))
-                  (not (<= value max)))       (data-error m attribute (max-fn attribute :max max))
+           (and (nil? min)
+                (not (nil? max))
+                (not (<= value max)))       (data-error m attribute (max-fn attribute :max max))
 
-             :else                            (assoc-in m [:data attribute] value))
-            (data-error m attribute (number-fn attribute :number)))
-          m)))))
+           :else                            (assoc-in m [:data attribute] value))
+          (data-error m attribute (number-fn attribute :number)))
+        m))))
+
+(defn length
+  [attribute & {:keys [is min max msg-fn is-message min-message max-message range-message]
+                :or {is-message    "should be exactly %d character(s)"
+                     min-message   "should be at least %d character(s)"
+                     max-message   "should be at most %d character(s)"
+                     range-message "should be between %d and %d characters long"}}]
+  (let [is-fn    (or msg-fn (constantly (format is-message is)))
+        min-fn   (or msg-fn (constantly (format min-message min)))
+        max-fn   (or msg-fn (constantly (format max-message max)))
+        range-fn (or msg-fn (constantly (format range-message min max)))]
+    (fn [m]
+      (if-let [value (get-value m attribute)]
+        (let [len (count value)]
+          (cond
+           (and (not (nil? is))
+                (not (= is len)))         (data-error m attribute (is-fn attribute :is is))
+
+           (and (not (nil? min))
+                (not (nil? max))
+                (not (and (>= len min)
+                          (<= len max)))) (data-error m attribute (range-fn attribute :range min max))
+
+           (and (not (nil? min))
+                (nil? max)
+                (not (>= len min)))       (data-error m attribute (min-fn attribute :min min))
+
+           (and (nil? min)
+                (not (nil? max))
+                (not (<= len max)))       (data-error m attribute (max-fn attribute :max max))
+
+           :else                          m))
+        m))))
 
 (defn choice
   "Create a transformer that checks if the value assigned to the given attribute key

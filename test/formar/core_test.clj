@@ -96,6 +96,60 @@
         (is (= "red" (get-in result [:data :color])))
         (is (nil? (get-in result [:data-errors :color])))))))
 
+(deftest test-length
+  (let [tran-fn (length :password :is 5)]
+
+    (testing "Accepts nils"
+      (let [result (tran-fn {})]
+        (is (nil? (get-in result [:data-errors :password])))))
+
+    (testing "Catches wrong values"
+      (let [result (tran-fn {:data {:password "123456"}})]
+        (is (= "should be exactly 5 character(s)" (get-in result [:data-errors :password])))))
+
+    (testing "Allows correct values"
+      (let [result (tran-fn {:data {:password "12345"}})]
+        (is (nil? (get-in result [:data-errors :password]))))))
+
+  (let [tran-fn (length :name :min 6)]
+    (testing "Accepts nils"
+      (let [result (tran-fn {})]
+        (is (nil? (get-in result [:data-errors :name])))))
+
+    (testing "Catches wrong values"
+      (let [result (tran-fn {:data {:name "Bob"}})]
+        (is (= "should be at least 6 character(s)" (get-in result [:data-errors :name])))))
+
+    (testing "Allows correct values"
+      (let [result (tran-fn {:data {:name "Audrey"}})]
+        (is (nil? (get-in result [:data-errors :name]))))))
+
+  (let [tran-fn (length :name :max 6)]
+    (testing "Accepts nils"
+      (let [result (tran-fn {})]
+        (is (nil? (get-in result [:data-errors :name])))))
+
+    (testing "Catches wrong values"
+      (let [result (tran-fn {:data {:name "Frederic"}})]
+        (is (= "should be at most 6 character(s)" (get-in result [:data-errors :name])))))
+
+    (testing "Allows correct values"
+      (let [result (tran-fn {:data {:name "Audrey"}})]
+        (is (nil? (get-in result [:data-errors :name]))))))
+
+  (let [tran-fn (length :name :min 3 :max 6)]
+    (testing "Accepts nils"
+      (let [result (tran-fn {})]
+        (is (nil? (get-in result [:data-errors :name])))))
+
+    (testing "Catches wrong values"
+      (let [result (tran-fn {:data {:name "Le"}})]
+        (is (= "should be between 3 and 6 characters long" (get-in result [:data-errors :name])))))
+
+    (testing "Allows correct values"
+      (let [result (tran-fn {:data {:name "Audrey"}})]
+        (is (nil? (get-in result [:data-errors :name])))))))
+
 (deftest test-required
   (testing "Catches nil values"
     (let [tran-fn (required :age)

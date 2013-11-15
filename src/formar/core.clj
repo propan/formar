@@ -51,12 +51,11 @@
   [attribute & {:keys [message msg-fn] :or {message "should be a number"}}]
   (let [msg-fn (or msg-fn (constantly message))]
     (fn [m]
-      (let [value (get-value m attribute ::not-found)]
-        (if-not (= value ::not-found)
-          (if-let [value (coerce-number value)]
-            (assoc-in m [:data attribute] value)
-            (data-error m attribute (msg-fn attribute :number)))
-          m)))))
+      (if-let [value (get-value m attribute)]
+        (if-let [value (coerce-number value)]
+          (assoc-in m [:data attribute] value)
+          (data-error m attribute (msg-fn attribute :number)))
+        m))))
 
 (defn range-of
   [attribute & {:keys [max min msg-fn number-message min-message max-message range-message]

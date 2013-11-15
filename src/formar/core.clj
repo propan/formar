@@ -90,6 +90,21 @@
             (data-error m attribute (number-fn attribute :number)))
           m)))))
 
+(defn choice
+  "Create a transformer that checks if the value assigned to the given attribute key
+   is in the set of allowed values. Nil-values are not allowed."
+  [attribute options & {:keys [msg-fn required-message not-allowed-message]
+                        :or {required-message    "is required"
+                             not-allowed-message "is not allowed"}}]
+  (let [required-fn    (or msg-fn (constantly required-message))
+        not-allowed-fn (or msg-fn (constantly not-allowed-message))]
+    (fn [m]
+      (if-let [value (get-value m attribute)]
+        (if-not (contains? options value)
+          (data-error m attribute (not-allowed-fn attribute :not-allowed))
+          m)
+        (data-error m attribute (required-fn attribute :required))))))
+
 (defn required
   "Creates a transformer that checks if the value assigned to attribute key
    is not nil or an empty string. It leaves the original map untouched."

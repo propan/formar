@@ -80,6 +80,22 @@
         (is (= "should be between 10 and 16" (get-in result [:data-errors :age])))
         (is (= 42 (get-in result [:data :age])))))))
 
+(deftest test-choice
+  (let [tran-fn (choice :color #{"red" "green" "blue"})]
+
+    (testing "Catches nil values"
+      (let [result (tran-fn {})]
+        (is (= "is required" (get-in result [:data-errors :color])))))
+
+    (testing "Catches wrong values"
+      (let [result (tran-fn {:data {:color "yellow"}})]
+        (is (= "is not allowed" (get-in result [:data-errors :color])))))
+
+    (testing "Allowes correct values"
+      (let [result (tran-fn {:data {:color "red"}})]
+        (is (= "red" (get-in result [:data :color])))
+        (is (nil? (get-in result [:data-errors :color])))))))
+
 (deftest test-required
   (testing "Catches nil values"
     (let [tran-fn (required :age)

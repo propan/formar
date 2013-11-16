@@ -8,9 +8,6 @@
 (ns formar.core)
 
 (def ^{:private true}
-  empty-form {:data {} :data-errors {} :form-errors []})
-
-(def ^{:private true}
   email-regexp #"^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$")
 
 (defn- data-error
@@ -260,7 +257,7 @@
      2. If any of field transformers detects a problem, non of the form transformers is triggered.
      3. If a form transformer detects an issue, the transformation ends."
   [source fields form-fn]
-  (let [r (reduce (partial transform-field source) empty-form fields)]
+  (let [r (reduce (partial transform-field source) {} fields)]
     (if (valid? r) (form-fn r) r)))
 
 ;; ----------------------

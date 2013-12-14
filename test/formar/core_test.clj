@@ -213,6 +213,14 @@
       (let [result (tran-fn {:data {:type "raw"}})]
         (is (= :raw (get-in result [:data :type])))))))
 
+(deftest test-checkbox
+  (testing " Performs transformation"
+    (let [tran-fn (checkbox :enabled)]
+      (are [result input] (= result (get-in (tran-fn input) [:data :enabled]))
+           false {}
+           false {:data {:enabled ""}}
+           false {:data {:enabled "false"}}
+           true  {:data {:enabled "on"}}))))
 
 (defn passwords-match
   [m]

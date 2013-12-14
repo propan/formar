@@ -213,6 +213,15 @@
   [attribute & {:keys [message msg-fn allow-nil] :or {message "is not a valid email" allow-nil false}}]
   (pattern attribute email-regexp :message message :msg-fn msg-fn :allow-nil allow-nil))
 
+(defn checkbox
+  "Creates a transformer that converts the value assigned to the given 'attribute' key to a boolean."
+  [attribute]
+  (fn [m]
+    (let [value (get-value m attribute)]
+      (if (and (string? value) (.equalsIgnoreCase "on" value))
+        (assoc-in m [:data attribute] true)
+        (assoc-in m [:data attribute] false)))))
+
 (defn keywordize
   "Creates a transformer that changes the value assigned to the given 'attribute' key to a keyword."
   [attribute]
